@@ -1,0 +1,35 @@
+{
+  "name": "ca-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@helia/unixfs": "^4.0.2",
+    "axios": "^1.7.9",
+    "bcryptjs": "^3.0.2",
+    "bufferutil": "^4.0.9",
+    "crypto": "^1.0.1",
+    "helia": "^5.2.1",
+    "ipfs-http-client": "^56.0.0",
+    "libp2p": "^2.8.0",
+    "mongoose": "^8.10.1",
+    "multiaddr": "^10.0.1",
+    "next": "15.1.6",
+    "next-auth": "^4.24.11",
+    "openssl-nodejs": "^1.0.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
+    "xrpl": "^4.2.0"
+  },
+  "devDependencies": {
+    "daisyui": "^4.12.23",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}
