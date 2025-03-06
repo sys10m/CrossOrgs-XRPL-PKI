@@ -1,5 +1,7 @@
 .next/
 node_modules/
+openssl/
+private/
 
 .DS_Store
 .env.local
