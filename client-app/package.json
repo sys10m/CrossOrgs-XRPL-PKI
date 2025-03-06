@@ -1,0 +1,31 @@
+{
+  "name": "client-mfa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "bcryptjs": "^3.0.2",
+    "mongoose": "^8.10.1",
+    "next": "15.1.7",
+    "next-auth": "^4.24.11",
+    "openssl-nodejs": "^1.0.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
+    "xrpl": "^4.2.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "daisyui": "^4.12.23",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.7",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.1"
+  }
+}
