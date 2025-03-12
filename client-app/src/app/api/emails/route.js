@@ -7,6 +7,7 @@ import User from "@/models/User";
 import { getNFTs } from "@/libs/rippled";
 import {ipfsBlockGet} from "@/libs/ipfs.js";
 import { decryptFileWithHashedEmail } from "@/libs/hash";
+import { EncryptMessageByCert } from "@/libs/openssl";
 
 export async function GET(req = NextRequest) {
     const session = await getServerSession(authOptions);
@@ -20,9 +21,8 @@ export async function GET(req = NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     const userEmail = user.email;
-    console.log(userEmail);
     const emails = await Email.find({ to: userEmail }).sort({ createdAt: -1 });
-    console.log(emails);
+
     return NextResponse.json({ emails }, { status: 200 });
 }
 
@@ -52,19 +52,17 @@ export async function POST(req = NextRequest) {
     // ignore ipfs padding
     console.log(typeof getRes);
     const content = getRes.subarray(8, getRes.length-3);
-    console.log(content);
 
     const decryptedCert = decryptFileWithHashedEmail(content, recipient);
-    console.log(decryptedCert.toString());
 
     // encrypt body
-    
+    const encryptedBody = await EncryptMessageByCert(body, decryptedCert.toString());
 
     const newEmail = new Email({
         from: session.user.id,
         to: recipient,
         subject: subject,
-        text: body
+        text: encryptedBody
     });
     await newEmail.save();
     return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });

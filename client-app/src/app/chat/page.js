@@ -25,6 +25,15 @@ const Chat = () => {
         fetchEmails();
     }, []);
 
+    const handleDecrypt = async (message) => {
+        const formData = new FormData();
+        formData.append('encryptedMessage', message);
+        const { decryptedMessage } = await apiClient.post('/decryptEmail', formData);
+        console.log(typeof decryptedMessage);
+        console.log(decryptedMessage)
+        return decryptedMessage;
+    }
+
     return (
         // Inside your component render method
 
@@ -51,7 +60,7 @@ const Chat = () => {
             </div>
 
             {/* Main content area */}
-            {selectedEmail && <EmailDetail email={selectedEmail} />}
+            {selectedEmail && <EmailDetail decrypt={handleDecrypt} email={selectedEmail} />}
         </div>
     );
 }
