@@ -54,7 +54,6 @@ const ipfsBlockGet = async (cid) => {
         if (!response.ok) {
             throw new Error(`Failed to retrieve block: ${response.statusText}`);
         }
-        console.log(response);
         const stream = await response.arrayBuffer();
         const buffer = Buffer.from(stream);
         return buffer;

@@ -27,7 +27,7 @@ const decryptFileWithHashedEmail = (encryptedBuffer, email) => {
     const iv = Buffer.from(process.env.FIXED_IV, 'hex');
     const cipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv);
     const decrypted = Buffer.concat([cipher.update(encryptedBuffer), cipher.final()]);
-    return decrypted;
+    return decrypted.toString();
 };
 
 

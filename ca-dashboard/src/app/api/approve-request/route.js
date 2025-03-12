@@ -7,20 +7,20 @@ const openssl = require('openssl-nodejs');
 const fs = require('fs');
 import SSL from "@/models/SSL";
 import User from "@/models/User";
-import {ipfsAdd, ipfsCat, ipfsGet, ipfsBlockGet, ipfsAddFromFilePath} from '@/libs/ipfs.js';
-import {encryptFileWithHashedEmail, generateXRPLAccountFromString} from '@/libs/hash.js';
-import {readCsr, SubjectTextToJson} from '@/libs/openssl.js';
-import { walletFunded, sendXRP, mintClient} from '@/libs/rippled.js';
+import { ipfsAdd, ipfsCat, ipfsGet, ipfsBlockGet, ipfsAddFromFilePath } from '@/libs/ipfs.js';
+import { encryptFileWithHashedEmail, decryptFileWithHashedEmail, generateXRPLAccountFromString } from '@/libs/hash.js';
+import { readCsr, SubjectTextToJson } from '@/libs/openssl.js';
+import { CAmintFor } from '@/libs/rippled.js';
 
 export async function GET(req = NextRequest) {
-    
+
     const fileContent = fs.readFileSync('openssl/testStudent-csr.pem');
     const encrypted = encryptFileWithHashedEmail(fileContent, 'hiranayp@tcd.ie')
     const encryptedBuffer = Buffer.from(encrypted);
     console.log(typeof encrypted);
     const cid = await ipfsAdd(encryptedBuffer, 'testStudent-csr.pem');
     console.log(cid);
-    
+
     /*
     const getRes = await ipfsBlockGet(cid);
     console.log(getRes.subarray(getRes.length-10));
@@ -36,16 +36,16 @@ export async function GET(req = NextRequest) {
     const decrypted = decryptFileWithHashedEmail(content, 'hiranayp@tcd.ie');
     console.log(decrypted.toString());
     */
-   /*
-    const cid = 'QmUwLiXJFbbXwcJmiMZpLrwCp9kcNqJGzAMthBDTDwm5zn';
-    const getRes = await ipfsBlockGet(cid);
-    console.log(getRes.subarray(getRes.length-10));
-    const content = getRes.subarray(8, getRes.length-3);
-    console.log(content);
-    console.log("try decrypt");
-    const decrypted = decryptFileWithHashedEmail(content, 'hollandt@tcd.ie');
-    console.log(decrypted.toString());
-    */
+    /*
+     const cid = 'QmUwLiXJFbbXwcJmiMZpLrwCp9kcNqJGzAMthBDTDwm5zn';
+     const getRes = await ipfsBlockGet(cid);
+     console.log(getRes.subarray(getRes.length-10));
+     const content = getRes.subarray(8, getRes.length-3);
+     console.log(content);
+     console.log("try decrypt");
+     const decrypted = decryptFileWithHashedEmail(content, 'hollandt@tcd.ie');
+     console.log(decrypted.toString());
+     */
     return NextResponse.json({ cid });
 }
 
@@ -58,7 +58,7 @@ export async function POST(req = NextRequest) {
 
     const formData = await req.formData();
     const id = formData.get('id');
-    
+
     try {
         const sslRequest = await SSL.findById(id);
         if (!sslRequest) {
@@ -77,43 +77,52 @@ export async function POST(req = NextRequest) {
         const csrText = await readCsr(csrBuffer);
 
         const csrjson = JSON.parse(SubjectTextToJson(csrText));
-        
+
         fs.writeFileSync(tempFile, csrBuffer);
         const outFileName = "tempCert.pem";
         fs.writeFileSync(`openssl/${outFileName}`, '');
-        openssl(['x509', '-req', '-in', fileName, '-out', outFileName, '-CA', process.env.MY_CERT_PATH, '-CAkey', process.env.MY_KEY_PATH, '-days', '365', '-passin', `pass:${process.env.MY_KEY_PASS}`]);
+        await new Promise((resolve, reject) => {
+            openssl(['x509', '-req', '-in', fileName, '-out', outFileName, '-CA', process.env.MY_CERT_PATH, '-CAkey', process.env.MY_KEY_PATH, '-days', '365', '-passin', `pass:${process.env.MY_KEY_PASS}`], async (buffer, err) => {
+                if (err.toString()) {
+                    console.log(`Error generating certificate: ${err.toString()}`);
+                    return reject(new Error('Failed to generate certificate'));
+                }
+                console.log(`read file from: ${outFileName}`);
+                console.log(`file size ${fs.statSync(`openssl/${outFileName}`).size}`);
+                const certContent = fs.readFileSync(`openssl/${outFileName}`);
 
-        const certContent = fs.readFileSync(`openssl/${outFileName}`);
+                const encrypted = encryptFileWithHashedEmail(certContent, csrjson.emailAddress);
+                const encryptedBuffer = Buffer.from(encrypted);
+                console.log(encryptedBuffer);
+                console.log(decryptFileWithHashedEmail(encryptedBuffer, csrjson.emailAddress));
+                const cid = await ipfsAdd(encryptedBuffer, 'cert.pem');
 
-        const encrypted = encryptFileWithHashedEmail(certContent, csrjson.emailAddress);
-        const encryptedBuffer = Buffer.from(encrypted);
-        const cid = await ipfsAdd(encryptedBuffer, 'cert.pem');
+                console.log(cid);
 
-        console.log(cid);
+                console.log("Mint NFT to Email");
+                await CAmintFor(csrjson.emailAddress, cid);
 
-        // xrpl
-        console.log("Try XRPL");
-        if (!(await walletFunded(csrjson.emailAddress))){
-            await sendXRP(process.env.XRPL_GENESIS_SEED, csrjson.emailAddress, "5");
-        }
-        console.log("Try mint");
-        await mintClient(csrjson.emailAddress, cid);
+                // update database
+                //sslRequest.status = 'approved';
+                //await sslRequest.save();
 
-        // update database
-        sslRequest.status = 'approved';
-        await sslRequest.save();
+                // clean up
+                try {
+                    fs.unlinkSync(tempFile);
+                    fs.unlinkSync(`openssl/${outFileName}`);
+                }
+                catch (error) {
+                    console.log(`Error cleaning up:${error}`);
+                }
+                resolve();
 
-        // clean up
-        try {
-            fs.unlinkSync(tempFile);
-            fs.unlinkSync(`openssl/${outFileName}`);
-        }
-        catch (error) {
-            console.log(`Error cleaning up:${error}`);
-        }
+            });
+        });
         return NextResponse.json({ message: 'SSL request approved successfully' }, { status: 200 });
+        // xrpl
+
     }
-    catch (error){
+    catch (error) {
         console.log(`Error approving SSL request:${error}`);
         return NextResponse.json({ error: 'Failed to approve SSL request' }, { status: 500 });
     }
