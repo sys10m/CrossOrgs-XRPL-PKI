@@ -74,9 +74,6 @@ const mintClient = async (email, uri) => {
   }
 }
 
-<<<<<<< Updated upstream
-export { walletFunded, sendXRP, mintClient };
-=======
 // FIX: make it cleaner i.e. one function
 const genesisMint = async (uri) => {
   const client = new xrpl.Client(net);
@@ -203,4 +200,3 @@ const CAmintFor = async (email, uri) => {
 }
 
 export { walletFunded, sendXRP, mintClient, getNFTs, CAmintFor };
->>>>>>> Stashed changes
