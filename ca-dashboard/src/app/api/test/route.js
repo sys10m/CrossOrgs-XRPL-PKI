@@ -18,7 +18,7 @@ export async function GET() {
         }
 
         // Read the CSR file
-        const csrPath = path.join('openssl', 'testStudent-csr.pem');
+        const csrPath = path.join('openssl', 'testEmail-csr.pem');
         const csrContent = fs.readFileSync(csrPath, 'utf8');
 
         // Create new SSL request

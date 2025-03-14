@@ -28,6 +28,15 @@ export default function Dashboard() {
         fetchRequests();
     }, []);
 
+    const handleTest = async () => {
+        try{
+            await apiClient.get('/test');
+        }catch (err) {
+            setError('Failed to test');
+            console.error('Error testing:', err);
+        }
+    }
+
     const handleApprove = async (id) => {
         const formData = new FormData();
         formData.append('id', id);
@@ -67,7 +76,7 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-6">
                 <AddCertificate />
-                
+                <button onClick={handleTest}>Test</button>
                 <div className="rounded-lg shadow p-6">
                     <h2 className="text-xl font-semibold mb-4">Your SSL Requests</h2>
                     <SSLRequestsTable 
